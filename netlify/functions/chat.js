@@ -30,6 +30,8 @@ exports.handler = async (event) => {
       "If, and only if, the user is clearly asking you to create, generate, draw, make, or edit an image, " +
       "reply with a short friendly line AND include this exact marker on its own at the end: " +
       "[[GENERATE_IMAGE: <a short, rich, detailed prompt describing exactly what to create>]]. " +
+      "Default to a photorealistic, real-photo style for the image prompt unless the user specifically asks for " +
+      "a different look (anime, cartoon, illustration, 3D, painting, etc.) — never default to anime or illustrated style. " +
       "Do not include the marker unless an image was actually requested. Never mention the marker syntax to the user.",
   };
 

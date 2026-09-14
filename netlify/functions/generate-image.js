@@ -26,7 +26,7 @@ exports.handler = async (event) => {
 
   // Boost quality automatically — pushes the free model toward its best output
   // regardless of how the prompt was phrased.
-  const qualityBoost = 'highly detailed, sharp focus, professional quality, best quality, 4k, realistic lighting';
+  const qualityBoost = 'photorealistic, real photograph, DSLR photo, natural skin texture, realistic lighting and shadows, highly detailed, sharp focus, 8k, professional photography';
   const boostedPrompt = `${prompt}, ${qualityBoost}`;
 
   const seed = Math.floor(Math.random() * 100000);
