@@ -241,7 +241,7 @@
     </div>
     <div id="chat-thumb-wrap" style="display:none; align-items:center; gap:10px; padding:0 16px 10px;">
       <img id="chat-thumb" style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
-      <span class="small-note" style="margin:0;">Photo attached — describe the edit</span>
+      <span class="small-note" style="margin:0;">Photo attached — note: free tier can't see it, describe the full new image you want</span>
       <button class="btn" type="button" onclick="removeChatImage()" style="padding:5px 10px; font-size:11px;">Remove</button>
     </div>
   </div>
@@ -670,7 +670,7 @@ async function handleImageUpload(e){
   state.uploadedImage = { b64, mime:'image/png' };
   document.getElementById('upload-thumb').src = 'data:image/png;base64,'+b64;
   document.getElementById('upload-thumb-wrap').style.display = 'flex';
-  document.getElementById('upload-mode-label').textContent = 'Editing your uploaded image';
+  document.getElementById('upload-mode-label').textContent = "Free mode: describes a NEW image from your instruction (can't see your photo's pixels)";
   document.getElementById('generate-btn').textContent = 'Edit image';
 }
 function removeUploadedImage(){

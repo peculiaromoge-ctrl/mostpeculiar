@@ -1,49 +1,42 @@
-# mostpeculiar — deploy instructions (100% free version)
+# mostpeculiar — deploy instructions (100% free version, v2)
+
+## What changed from the last version
+Hugging Face shut down their old free image-generation API in 2025. Big
+image models now cost money through their new "Inference Providers"
+system, so this version goes back to Pollinations for images (free,
+unlimited, no key, no watermark) and keeps chat on Hugging Face's free
+router with a small free model.
 
 ## Folder structure
 ```
 index.html                            <- the app
 netlify.toml                          <- tells Netlify where the functions live
-netlify/functions/generate-image.js   <- server-side: text-to-image (Hugging Face, free)
-netlify/functions/edit-image.js       <- server-side: image editing (Hugging Face, free)
-netlify/functions/chat.js             <- server-side: chat (Hugging Face, free)
+netlify/functions/generate-image.js   <- server-side: creates images (Pollinations, free)
+netlify/functions/edit-image.js       <- server-side: same as above (see limitation below)
+netlify/functions/chat.js             <- server-side: chat (Hugging Face free router)
 ```
 
+## Honest limitation: image "editing"
+There is currently no free API that can actually see and edit the pixels
+of an uploaded photo. When a photo is attached, the app generates a brand
+NEW image from the typed description — it does not use the uploaded
+photo's actual content. The UI says this plainly so it's never a surprise.
+
 ## Cost
-Nothing. Everything runs on Hugging Face's free Inference API. There is no
-billing setup, no card required for a basic Hugging Face account.
+$0. Pollinations needs no key at all. Chat needs a free Hugging Face
+token (no card required).
 
 ## Steps to deploy
+1. Get a free Hugging Face token: huggingface.co/settings/tokens -> New
+   token -> Role: Read.
+2. Push this folder to a GitHub repo, or update your existing one.
+3. Netlify -> Site settings -> Environment variables -> HF_API_TOKEN ->
+   paste your token.
+4. Trigger a redeploy (Deploys tab -> Trigger deploy).
+5. Test: Chat -> ask it to create an image.
 
-1. Create a free Hugging Face account: huggingface.co/join
-
-2. Get a free API token: huggingface.co/settings/tokens
-   -> "New token" -> Role: "Read" is enough -> Copy it.
-
-3. Push this whole folder to a GitHub repo (functions only work through
-   Netlify's Git-based deploys, not drag-and-drop Netlify Drop).
-
-4. On netlify.com -> Add new site -> Import from Git -> pick this repo.
-
-5. Go to: Site settings -> Environment variables -> Add a variable
-   Key:   HF_API_TOKEN
-   Value: (paste your Hugging Face token)
-
-6. Redeploy the site (Deploys tab -> Trigger deploy) so the functions pick
-   up the new environment variable.
-
-7. Test: open the site, go to Chat, ask it to create an image, then try
-   attaching a photo with an edit instruction.
-
-## Things to know about the free tier
-- First request after a while of inactivity can be slow ("model is waking
-  up") — this is Hugging Face's free hosting spinning the model back up,
-  not a bug. Retrying after the suggested wait fixes it.
-- Image editing (InstructPix2Pix) reinterprets the photo based on your
-  instruction rather than doing pixel-perfect edits like a paid tool would.
-- No watermark, no branding added to any image — completely clean output.
-
-## Why Netlify Drop won't work
-Netlify Drop only accepts a single HTML/zip and doesn't run serverless
-functions. These functions need a Git-connected Netlify site + the
-HF_API_TOKEN environment variable to work.
+## Things to know
+- Pollinations (images) — genuinely free and unlimited, may occasionally
+  be slower during high traffic, but doesn't need a token.
+- Hugging Face chat — free tier, occasional slow response or "model
+  loading" message on first use after inactivity.
