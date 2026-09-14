@@ -1,9 +1,7 @@
-// Server-side only. Uses Hugging Face's free Inference API for chat instead
-// of OpenAI, so conversation costs nothing. When the model decides the user
-// wants an image made, it embeds a marker in its reply:
+// Server-side only. Uses Hugging Face's free router API for chat.
+// When the model decides the user wants an image made, it embeds a marker:
 //   [[GENERATE_IMAGE: a short rich prompt describing the image]]
-// The frontend looks for that marker, strips it from the displayed text, and
-// calls generate-image.js (or edit-image.js if a photo was attached).
+// The frontend strips that marker and calls generate-image.js (Pollinations).
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -25,49 +23,51 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing messages' }) };
   }
 
-  const systemPrompt =
-    "You are the assistant inside mostpeculiar, a friendly AI creative app. Chat naturally and warmly. " +
-    "If, and only if, the user is clearly asking you to create, generate, draw, make, or edit an image, " +
-    "reply with a short friendly line AND include this exact marker on its own at the end: " +
-    "[[GENERATE_IMAGE: <a short, rich, detailed prompt describing exactly what to create>]]. " +
-    "Do not include the marker unless an image was actually requested. Never mention the marker syntax to the user.";
-
-  // Build a single chat-formatted prompt for the HF text-generation model.
-  const formatted = [
-    `<|system|>\n${systemPrompt}</s>`,
-    ...messages.map(m => `<|${m.role === 'user' ? 'user' : 'assistant'}|>\n${m.content}</s>`),
-    '<|assistant|>',
-  ].join('\n');
+  const systemPrompt = {
+    role: 'system',
+    content:
+      "You are the assistant inside mostpeculiar, a friendly AI creative app. Chat naturally and warmly. " +
+      "If, and only if, the user is clearly asking you to create, generate, draw, make, or edit an image, " +
+      "reply with a short friendly line AND include this exact marker on its own at the end: " +
+      "[[GENERATE_IMAGE: <a short, rich, detailed prompt describing exactly what to create>]]. " +
+      "Do not include the marker unless an image was actually requested. Never mention the marker syntax to the user.",
+  };
 
   try {
-    const hfResp = await fetch('https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta', {
+    // New Hugging Face router, OpenAI-compatible chat endpoint.
+    // ":hf-inference" pins it to Hugging Face's own free serverless provider
+    // instead of a paid third-party provider.
+    const hfResp = await fetch('https://router.huggingface.co/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${hfToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: formatted,
-        parameters: { max_new_tokens: 400, temperature: 0.8, return_full_text: false },
+        model: 'Qwen/Qwen2.5-7B-Instruct:hf-inference',
+        messages: [systemPrompt, ...messages],
+        temperature: 0.8,
       }),
     });
 
     const data = await hfResp.json();
-
     if (!hfResp.ok) {
-      const errMsg = data.error
-        ? (data.estimated_time ? `Model is waking up — try again in about ${Math.ceil(data.estimated_time)}s.` : data.error)
-        : 'Hugging Face request failed';
-      return { statusCode: hfResp.status, body: JSON.stringify({ error: errMsg }) };
+      return {
+        statusCode: hfResp.status,
+        body: JSON.stringify({ error: data.error?.message || data.error || 'Hugging Face request failed' }),
+      };
     }
 
-    const reply = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
+    const reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!reply) {
       return { statusCode: 502, body: JSON.stringify({ error: 'Hugging Face returned no reply' }) };
     }
 
     return { statusCode: 200, body: JSON.stringify({ reply: reply.trim() }) };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message || 'Unexpected server error' }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: (err.message || 'Unexpected server error') + (err.cause ? ' — ' + err.cause : '') }),
+    };
   }
 };
