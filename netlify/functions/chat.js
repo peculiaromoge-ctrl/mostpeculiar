@@ -44,7 +44,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'Qwen/Qwen2.5-7B-Instruct:hf-inference',
+        model: 'meta-llama/Llama-3.1-8B-Instruct',
         messages: [systemPrompt, ...messages],
         temperature: 0.8,
       }),
